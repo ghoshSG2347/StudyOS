@@ -3,9 +3,9 @@ import { X, Play, CheckCircle2, Sparkles, FileText, ArrowRight, Layers, Sliders 
 import confetti from 'canvas-confetti';
 
 export default function DemoModal({ isOpen, onClose }) {
-  if (!isOpen) return null;
-
   const [activeStep, setActiveStep] = useState(0);
+
+  if (!isOpen) return null;
 
   const demoSteps = [
     {

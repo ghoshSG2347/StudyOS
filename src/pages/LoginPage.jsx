@@ -10,10 +10,10 @@ import { useAuth } from '../context/AuthContext';
 
 export default function LoginPage() {
   const navigate   = useNavigate();
-  const { user, profile }   = useAuth();
+  const { user, profile, mfaPending, beginMfa, completeMfa, cancelMfa } = useAuth();
 
   // Form State
-  const [identifier, setIdentifier] = useState(''); // Username or Email
+  const [identifier, setIdentifier] = useState('');
   const [password, setPassword]     = useState('');
   const [showPw, setShowPw]         = useState(false);
   const [step, setStep]             = useState('credentials'); // 'credentials' | 'otp'
@@ -36,10 +36,10 @@ export default function LoginPage() {
 
   // Redirect if already logged in with complete profile
   useEffect(() => {
-    if (user && profile) {
+    if (user && profile && !mfaPending) {
       navigate('/', { replace: true });
     }
-  }, [user, profile, navigate]);
+  }, [user, profile, mfaPending, navigate]);
 
   // GSAP Entrance animation whenever step changes
   useEffect(() => {
@@ -87,31 +87,20 @@ export default function LoginPage() {
 
     const inputVal = identifier.trim();
     if (!inputVal || !password) {
-      setError('Please enter your email or username and password.');
+      setError('Please enter your email and password.');
       return;
     }
 
     setLoading(true);
 
     try {
-      let targetEmail = inputVal;
-
-      // Detect if input is an email (contains '@') or a username
-      if (!inputVal.includes('@')) {
-        // Query profiles table to find matching email for username
-        const { data: profileData, error: profileErr } = await supabase
-          .from('profiles')
-          .select('email')
-          .ilike('username', inputVal)
-          .maybeSingle();
-
-        if (profileErr || !profileData?.email) {
-          throw new Error('No account found with that username. Please check your username or sign up.');
-        }
-        targetEmail = profileData.email;
+      const targetEmail = inputVal;
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(targetEmail)) {
+        throw new Error('Invalid email or password.');
       }
 
       setResolvedEmail(targetEmail);
+      beginMfa();
 
       // Verify credentials with signInWithPassword
       const { error: authErr } = await supabase.auth.signInWithPassword({
@@ -121,30 +110,31 @@ export default function LoginPage() {
 
       if (authErr) {
         if (authErr.message.toLowerCase().includes('invalid login credentials')) {
-          throw new Error('Invalid email/username or password. Please check your details.');
+          throw new Error('Invalid email or password.');
         }
         if (authErr.message.toLowerCase().includes('email not confirmed')) {
-          throw new Error('Your email address has not been confirmed yet. Please check your inbox for the verification link.');
+          throw new Error('Invalid email or password.');
         }
-        throw authErr;
+        throw new Error('Invalid email or password.');
       }
+
+      // Do not leave the password-authenticated session active while MFA is pending.
+      await supabase.auth.signOut();
 
       // Credentials verified! Now trigger OTP send for 2FA
       const { error: otpErr } = await supabase.auth.signInWithOtp({
         email: targetEmail,
       });
 
-      if (otpErr) {
-        console.warn('[Login] OTP send notice:', otpErr.message);
-        // Even if signInWithOtp returns rate-limit or minor error, proceed to OTP step if email code was sent
-      }
+      if (otpErr) throw new Error('Invalid email or password.');
 
       // Transition to OTP verification step
       setStep('otp');
       setCooldown(30);
       setCanResend(false);
-      setInfoMessage(`We've sent a 6-digit code to ${targetEmail}`);
+      setInfoMessage("We've sent a 6-digit code to your email address.");
     } catch (err) {
+      await cancelMfa();
       setError(err.message || 'Login failed. Please try again.');
     } finally {
       setLoading(false);
@@ -226,6 +216,7 @@ export default function LoginPage() {
       }
 
       // OTP verified successfully! Session established
+      await completeMfa();
       navigate('/', { replace: true });
     } catch (err) {
       setError(err.message || 'OTP verification failed.');
@@ -249,7 +240,7 @@ export default function LoginPage() {
 
       if (resendErr) throw resendErr;
 
-      setInfoMessage(`A fresh 6-digit code has been sent to ${resolvedEmail}`);
+      setInfoMessage('A fresh 6-digit code has been sent to your email address.');
       setCooldown(30);
       setCanResend(false);
       setOtpDigits(['', '', '', '', '', '']);
@@ -304,20 +295,20 @@ export default function LoginPage() {
               )}
 
               <form onSubmit={handleCredentialsSubmit} className="space-y-4">
-                {/* Single Input: Username or Email */}
+                {/* Authentication uses email so profile data is never exposed for lookup. */}
                 <div data-anim className="space-y-1.5">
                   <label htmlFor="login-identifier" className="block text-[11px] font-bold text-slate-400 uppercase tracking-widest font-mono">
-                    Username or Email
+                    Email address
                   </label>
                   <div className="relative">
                     <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 pointer-events-none" />
                     <input
                       id="login-identifier"
                       type="text"
-                      autoComplete="username"
+                      autoComplete="email"
                       value={identifier}
                       onChange={(e) => setIdentifier(e.target.value)}
-                      placeholder="username or user@university.edu"
+                      placeholder="you@university.edu"
                       required
                       className="w-full pl-10 pr-4 py-3 rounded-xl bg-white/[0.06] border border-white/10 text-white placeholder-slate-600 text-sm focus:outline-none focus:border-indigo-500 focus:bg-white/[0.08] transition-all"
                     />

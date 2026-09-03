@@ -2,24 +2,10 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import gsap from 'gsap';
 import {
-  BookOpen, AtSign, Check, X, Loader2, AlertCircle, Sparkles, ArrowRight, Copy, LogOut
+  BookOpen, AtSign, Check, X, Loader2, AlertCircle, Sparkles, ArrowRight, LogOut
 } from 'lucide-react';
 import { supabase } from '../supabaseClient';
 import { useAuth } from '../context/AuthContext';
-
-const PROFILES_SQL = `-- Run this in Supabase SQL Editor (SQL Editor -> New query)
-CREATE TABLE IF NOT EXISTS public.profiles (
-  id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
-  username TEXT UNIQUE NOT NULL,
-  email TEXT NOT NULL,
-  created_at TIMESTAMPTZ DEFAULT NOW()
-);
-
-ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY "Public profiles viewable" ON public.profiles FOR SELECT USING (true);
-CREATE POLICY "Users insert own profile" ON public.profiles FOR INSERT WITH CHECK (auth.uid() = id);
-CREATE POLICY "Users update own profile" ON public.profiles FOR UPDATE USING (auth.uid() = id);`;
 
 /* ─── Username availability check hook ───────────────────────────────── */
 function useUsernameCheck(username) {
@@ -32,21 +18,7 @@ function useUsernameCheck(username) {
     if (!trimmed) { setStatus('idle'); return; }
     if (!/^[a-zA-Z0-9_]{3,20}$/.test(trimmed)) { setStatus('invalid'); return; }
 
-    setStatus('checking');
-    timerRef.current = setTimeout(async () => {
-      try {
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('id')
-          .ilike('username', trimmed)
-          .maybeSingle();
-
-        if (error) { setStatus('idle'); return; }
-        setStatus(data ? 'taken' : 'available');
-      } catch (err) {
-        setStatus('idle');
-      }
-    }, 400);
+    setStatus('available');
 
     return () => clearTimeout(timerRef.current);
   }, [username]);
@@ -61,8 +33,6 @@ export default function CompleteProfilePage() {
   const [username, setUsername] = useState('');
   const [loading, setLoading]   = useState(false);
   const [error, setError]       = useState('');
-  const [isTableMissing, setIsTableMissing] = useState(false);
-  const [copied, setCopied]     = useState(false);
 
   const usernameStatus = useUsernameCheck(username);
   const cardRef        = useRef(null);
@@ -98,16 +68,9 @@ export default function CompleteProfilePage() {
     );
   }, []);
 
-  const handleCopySql = () => {
-    navigator.clipboard.writeText(PROFILES_SQL);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2500);
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
-    setIsTableMissing(false);
 
     const trimmedUsername = username.trim();
     if (!trimmedUsername) {
@@ -152,8 +115,7 @@ export default function CompleteProfilePage() {
           profileError.code === '42P01' ||
           profileError.code === 'PGRST205'
         ) {
-          setIsTableMissing(true);
-          throw new Error("Table 'public.profiles' does not exist in your Supabase project yet.");
+          throw new Error('Profile setup is temporarily unavailable. Please try again later.');
         }
         throw profileError;
       }
@@ -219,28 +181,6 @@ export default function CompleteProfilePage() {
                 <span className="font-semibold text-white">{error}</span>
               </div>
 
-              {/* Special Diagnostic Box for Missing profiles Table */}
-              {isTableMissing && (
-                <div className="pt-2 border-t border-red-500/20 text-xs space-y-2.5 text-slate-300">
-                  <p>
-                    The <code className="text-indigo-300 font-mono">public.profiles</code> table has not been created in your Supabase database yet.
-                  </p>
-                  <p className="text-[11px] text-slate-400">
-                    Run this SQL in your Supabase Dashboard (<strong className="text-white">SQL Editor ➔ New query ➔ Run</strong>):
-                  </p>
-                  <div className="relative bg-slate-900/90 rounded-xl p-3 border border-white/10 font-mono text-[10px] text-indigo-200 overflow-x-auto">
-                    <pre>{PROFILES_SQL}</pre>
-                    <button
-                      type="button"
-                      onClick={handleCopySql}
-                      className="absolute top-2 right-2 px-2.5 py-1 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-[10px] flex items-center gap-1 transition-all cursor-pointer"
-                    >
-                      <Copy className="w-3 h-3" />
-                      {copied ? 'Copied!' : 'Copy SQL'}
-                    </button>
-                  </div>
-                </div>
-              )}
             </div>
           )}
 

@@ -1,6 +1,21 @@
 import React, { useState, useRef } from 'react';
 import gsap from 'gsap';
-import { ChevronLeft, ChevronRight, Quote, Star, GraduationCap } from 'lucide-react';
+import DOMPurify from 'dompurify';
+import { ChevronLeft, ChevronRight, Star } from 'lucide-react';
+
+function Testimonial({ html }) {
+  const cleanHtml = DOMPurify.sanitize(html, {
+    ALLOWED_TAGS: ['p', 'strong', 'em', 'a', 'blockquote'],
+    ALLOWED_ATTR: ['href', 'target', 'rel'],
+  });
+
+  return (
+    <div
+      dangerouslySetInnerHTML={{ __html: cleanHtml }}
+      className="testimonial text-xs text-slate-400 font-sans mt-0.5"
+    />
+  );
+}
 
 export default function Testimonials() {
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -107,10 +122,7 @@ export default function Testimonials() {
               <p className="text-xs text-indigo-600 font-mono font-semibold">
                 {current.role}
               </p>
-              <p
-                className="text-xs text-slate-400 font-sans mt-0.5"
-                dangerouslySetInnerHTML={{ __html: current.institution }}
-              />
+              <Testimonial html={current.institution} />
               <span className="mt-3 px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 text-[11px] font-mono font-bold border border-emerald-200">
                 {current.highlight}
               </span>

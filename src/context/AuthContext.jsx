@@ -16,6 +16,7 @@ export function AuthProvider({ children }) {
   const [profile, setProfile]           = useState(null);
   const [profileLoaded, setProfileLoaded] = useState(false);
   const [loading, setLoading]           = useState(true);
+  const [mfaPending, setMfaPending]     = useState(false);
 
   // Fetch profile row for a given user id
   const fetchProfile = useCallback(async (userId) => {
@@ -27,7 +28,7 @@ export function AuthProvider({ children }) {
     setProfileLoaded(false);
     const { data, error } = await supabase
       .from('profiles')
-      .select('*')
+      .select('id, username, email, created_at')
       .eq('id', userId)
       .maybeSingle();
 
@@ -45,55 +46,80 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     // 1. Rehydrate existing session on mount
     supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      const u = session?.user ?? null;
-      setUser(u);
-      fetchProfile(u?.id ?? null);
+      if (!mfaPending) {
+        setSession(session);
+        const u = session?.user ?? null;
+        setUser(u);
+        fetchProfile(u?.id ?? null);
+      }
       setLoading(false);
     });
 
     // 2. Subscribe to all auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (_event, session) => {
-        setSession(session);
-        const u = session?.user ?? null;
-        setUser(u);
-        fetchProfile(u?.id ?? null);
+        if (!mfaPending) {
+          setSession(session);
+          const u = session?.user ?? null;
+          setUser(u);
+          fetchProfile(u?.id ?? null);
+        }
         setLoading(false);
       }
     );
 
     return () => subscription.unsubscribe();
+  }, [fetchProfile, mfaPending]);
+
+  const beginMfa = useCallback(() => {
+    setMfaPending(true);
+    setSession(null);
+    setUser(null);
+    setProfile(null);
+    setProfileLoaded(true);
+  }, []);
+
+  const completeMfa = useCallback(async () => {
+    setMfaPending(false);
+    const { data: { session: verifiedSession } } = await supabase.auth.getSession();
+    setSession(verifiedSession);
+    const verifiedUser = verifiedSession?.user ?? null;
+    setUser(verifiedUser);
+    await fetchProfile(verifiedUser?.id ?? null);
   }, [fetchProfile]);
+
+  const cancelMfa = useCallback(async () => {
+    setMfaPending(false);
+    await supabase.auth.signOut();
+    setSession(null);
+    setUser(null);
+    setProfile(null);
+    setProfileLoaded(true);
+  }, []);
 
   const deleteAccount = async () => {
     const currentUser = user;
     if (!currentUser) throw new Error('No user logged in');
 
-    // 1. Delete profile row from public.profiles
-    const { error: profileErr } = await supabase
-      .from('profiles')
-      .delete()
-      .eq('id', currentUser.id);
-    if (profileErr) console.warn('[AuthContext] profile delete error:', profileErr.message);
+    // The RPC is the authoritative deletion path and must succeed.
+    const { error: rpcErr } = await supabase.rpc('delete_own_account');
+    if (rpcErr) {
+      throw new Error('Account deletion could not be completed. Please try again.');
+    }
 
-    // 2. Clear this user's localStorage data
+    // The auth.users foreign key cascade removes the profile and other owned rows.
     const storageKey = `studyos_syllabi_v3_${currentUser.id}`;
-    try { localStorage.removeItem(storageKey); } catch (_) { /* noop */ }
-
-    // 3. Try to delete auth user via a Supabase RPC (requires server-side function)
-    //    If the RPC doesn't exist, fall back to just signing out.
     try {
-      const { error: rpcErr } = await supabase.rpc('delete_own_account');
-      if (rpcErr) {
-        console.warn('[AuthContext] RPC delete_own_account not available:', rpcErr.message);
-      }
-    } catch (_) { /* RPC not set up — that's OK */ }
-
-    // 4. Sign out locally regardless
-    setProfile(null);
-    setProfileLoaded(false);
-    await supabase.auth.signOut();
+      localStorage.removeItem(storageKey);
+    } catch (storageError) {
+      console.warn('[AuthContext] Could not clear local syllabus data:', storageError);
+    } finally {
+      setProfile(null);
+      setProfileLoaded(false);
+      setSession(null);
+      setUser(null);
+      await supabase.auth.signOut();
+    }
   };
 
   const signOut = async () => {
@@ -104,7 +130,8 @@ export function AuthProvider({ children }) {
 
   return (
     <AuthContext.Provider value={{
-      user, session, profile, profileLoaded, loading, signOut, deleteAccount, refreshProfile
+      user, session, profile, profileLoaded, loading, mfaPending,
+      beginMfa, completeMfa, cancelMfa, signOut, deleteAccount, refreshProfile
     }}>
       {children}
     </AuthContext.Provider>

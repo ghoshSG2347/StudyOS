@@ -39,25 +39,7 @@ function useUsernameCheck(username) {
     if (!trimmed) { setStatus('idle'); return; }
     if (!/^[a-zA-Z0-9_]{3,20}$/.test(trimmed)) { setStatus('invalid'); return; }
 
-    setStatus('checking');
-    timerRef.current = setTimeout(async () => {
-      try {
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('id')
-          .ilike('username', trimmed)
-          .maybeSingle();
-
-        if (error) {
-          console.warn('[UsernameCheck] error:', error.message);
-          setStatus('idle');
-          return;
-        }
-        setStatus(data ? 'taken' : 'available');
-      } catch (err) {
-        setStatus('idle');
-      }
-    }, 400);
+    setStatus('available');
 
     return () => clearTimeout(timerRef.current);
   }, [username]);
@@ -125,12 +107,12 @@ export default function SignUpPage() {
       setError('Checking username availability... Please wait a second.');
       return;
     }
-    if (!trimmedEmail) {
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) {
       setError('Please enter a valid email address.');
       return;
     }
-    if (strength.score < 2) {
-      setError('Password is too weak. Please include at least 8 characters, numbers, or special symbols.');
+    if (strength.score < 3 || password.length < 12) {
+      setError('Password is too weak. Use at least 12 characters with uppercase, numbers, and symbols.');
       return;
     }
 
@@ -138,7 +120,7 @@ export default function SignUpPage() {
 
     try {
       // 1. Call supabase.auth.signUp() with email, password, and options.data.username
-      const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+      const { error: signUpError } = await supabase.auth.signUp({
         email: trimmedEmail,
         password,
         options: {
@@ -152,26 +134,7 @@ export default function SignUpPage() {
         throw signUpError;
       }
 
-      // 2. Insert row into public.profiles table
-      if (signUpData?.user) {
-        const { error: profileError } = await supabase
-          .from('profiles')
-          .insert({
-            id: signUpData.user.id,
-            username: trimmedUsername,
-            email: trimmedEmail,
-          });
-
-        if (profileError) {
-          console.warn('[SignUp] Profile insert warning:', profileError.message);
-          // If error is duplicate username constraint violation from DB
-          if (profileError.code === '23505') {
-            throw new Error('That username is already taken. Please try a different username.');
-          }
-        }
-      }
-
-      // 3. Show "Check your email to verify your account" screen
+      // Profile creation is handled by the database trigger after auth signup.
       setDone(true);
     } catch (err) {
       const msg = err.message || '';

@@ -4,14 +4,14 @@ import confetti from 'canvas-confetti';
 import { extractTextFromPDF, parseSyllabusText } from '../utils/syllabusParser';
 
 export default function UploadModal({ isOpen, onClose, onSyllabusParsed }) {
-  if (!isOpen) return null;
-
   const [isProcessing, setIsProcessing] = useState(false);
   const [processingMsg, setProcessingMsg] = useState('');
   const [pastedText, setPastedText] = useState('');
   const [parsedPreview, setParsedPreview] = useState(null);
   const [selectedCourseIds, setSelectedCourseIds] = useState([]);
   const fileInputRef = useRef(null);
+
+  if (!isOpen) return null;
 
   const handleFile = async (file) => {
     if (!file) return;
