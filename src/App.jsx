@@ -3,10 +3,12 @@ import Lenis from 'lenis';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { 
-  FileUp, BookOpen, Layers, Sparkles, ChevronRight, Menu, X, Plus, Trash2, Edit3, LogOut, UserCircle, AlertTriangle
+  FileUp, BookOpen, Layers, Sparkles, ChevronRight, Menu, X, Plus, Trash2, Edit3, LogOut, UserCircle, AlertTriangle, Download
 } from 'lucide-react';
 import { useAuth } from './context/AuthContext';
+import { promptPwaInstall, onInstallableChange } from './pwaRegister';
 import Hero from './components/Hero3D';
+
 import Features from './components/Features';
 import SocialProofBar from './components/SocialProofBar';
 import Sidebar from './components/Sidebar';
@@ -43,7 +45,13 @@ export default function App() {
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
+  const [canInstall, setCanInstall] = useState(false);
   const profileMenuRef = useRef(null);
+
+  // Subscribe to PWA install availability
+  useEffect(() => {
+    return onInstallableChange((installable) => setCanInstall(installable));
+  }, []);
 
   // Close profile menu on outside click
   useEffect(() => {
@@ -236,6 +244,18 @@ export default function App() {
 
           {/* Quick Header Actions */}
           <div className="flex items-center gap-2 sm:gap-3">
+            {canInstall && (
+              <button
+                onClick={promptPwaInstall}
+                className="px-3 py-1.5 rounded-xl bg-violet-50 hover:bg-violet-100 text-violet-700 text-xs font-bold font-mono border border-violet-200/80 flex items-center gap-1.5 transition-colors cursor-pointer"
+                title="Install StudyOS on desktop or mobile"
+              >
+                <Download className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Install App</span>
+                <span className="sm:hidden">Install</span>
+              </button>
+            )}
+
             <button
               onClick={() => setUploadModalOpen(true)}
               className="px-3.5 py-1.5 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-bold font-mono border border-indigo-200/80 flex items-center gap-1.5 transition-colors cursor-pointer"

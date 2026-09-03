@@ -5,6 +5,7 @@ import {
   Settings, Zap, ExternalLink, Menu, X, ArrowUpRight, Check, LogOut
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import PwaInstallPrompt from './PwaInstallPrompt';
 
 export default function Sidebar({ 
   currentView, 
@@ -284,6 +285,9 @@ export default function Sidebar({
         <div className="p-4 border-t border-slate-100 bg-slate-50/50">
           {!isCollapsed ? (
             <div className="space-y-3">
+              {/* PWA Install Banner */}
+              <PwaInstallPrompt />
+
               {/* User identity row */}
               <div className="flex items-center gap-2.5 px-1">
                 <div className="w-7 h-7 rounded-full bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center text-white text-[11px] font-bold flex-shrink-0 shadow-sm">
