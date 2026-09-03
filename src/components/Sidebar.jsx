@@ -2,9 +2,8 @@ import React, { useState } from 'react';
 import { 
   CheckSquare, FileUp, BarChart3, Sparkles, BookOpen, 
   ChevronLeft, ChevronRight, Plus, Trash2, Edit3, ShieldCheck, 
-  Settings, Zap, ExternalLink, Menu, X, ArrowUpRight, Check, LogOut
+  Settings, Zap, ExternalLink, Menu, X, ArrowUpRight, Check
 } from 'lucide-react';
-import { useAuth } from '../context/AuthContext';
 import PwaInstallPrompt from './PwaInstallPrompt';
 
 export default function Sidebar({ 
@@ -23,7 +22,6 @@ export default function Sidebar({
   mobileOpen,
   setMobileOpen
 }) {
-  const { user, signOut } = useAuth();
   const [syllabusDropdownOpen, setSyllabusDropdownOpen] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [editingTitle, setEditingTitle] = useState('');
@@ -290,26 +288,6 @@ export default function Sidebar({
               {/* PWA Install Banner */}
               <PwaInstallPrompt />
 
-              {/* User identity row */}
-              <div className="flex items-center gap-2.5 px-1">
-                <div className="w-7 h-7 rounded-full bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center text-white text-[11px] font-bold flex-shrink-0 shadow-sm">
-                  {user?.email?.[0]?.toUpperCase() ?? '?'}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-[11px] font-bold text-slate-700 truncate">{user?.email ?? 'Guest'}</p>
-                  <p className="text-[10px] text-slate-400 font-mono">Logged in</p>
-                </div>
-                <button
-                  id="sidebar-logout-btn"
-                  onClick={signOut}
-                  title="Sign out"
-                  className="p-1.5 rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors cursor-pointer flex-shrink-0"
-                  aria-label="Sign out"
-                >
-                  <LogOut className="w-3.5 h-3.5" />
-                </button>
-              </div>
-
               {/* Mini Semester Progress Widget */}
               <div className="p-3.5 rounded-2xl bg-white border border-slate-200/80 shadow-2xs">
                 <div className="flex items-center justify-between text-xs mb-1.5">
@@ -341,23 +319,9 @@ export default function Sidebar({
             </div>
           ) : (
             <div className="flex flex-col items-center gap-3">
-              <div
-                className="w-7 h-7 rounded-full bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center text-white text-[11px] font-bold cursor-pointer"
-                title={user?.email}
-              >
-                {user?.email?.[0]?.toUpperCase() ?? '?'}
-              </div>
               <div className="w-8 h-8 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center font-mono text-[11px] font-bold">
                 {overallStats.percent}%
               </div>
-              <button
-                onClick={signOut}
-                title="Sign out"
-                className="p-1.5 rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors cursor-pointer"
-                aria-label="Sign out"
-              >
-                <LogOut className="w-3.5 h-3.5" />
-              </button>
               <span className="h-2 w-2 rounded-full bg-emerald-500" />
             </div>
           )}

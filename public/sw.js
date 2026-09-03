@@ -44,18 +44,13 @@ self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
 
-  // Skip non-GET requests (e.g. POST/PUT to Supabase)
+  // Skip non-GET requests.
   if (request.method !== 'GET') {
     return;
   }
 
   // Skip chrome-extension requests and non-http(s)
   if (!url.protocol.startsWith('http')) {
-    return;
-  }
-
-  // Bypass API requests to Supabase (Auth, DB REST queries) to always fetch live
-  if (url.hostname.includes('supabase.co')) {
     return;
   }
 

@@ -1,11 +1,10 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
 import Lenis from 'lenis';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { 
-  FileUp, BookOpen, Layers, Sparkles, ChevronRight, Menu, X, Plus, Trash2, Edit3, LogOut, UserCircle, AlertTriangle, Download
+  FileUp, BookOpen, Layers, Sparkles, ChevronRight, Menu, X, Download
 } from 'lucide-react';
-import { useAuth } from './context/AuthContext';
 import { promptPwaInstall, onInstallableChange } from './pwaRegister';
 import Hero from './components/Hero3D';
 
@@ -30,11 +29,7 @@ Primary Action: Ingest PDF / Scanned Photos ➔ 100% Noise-Free Micro-Topic Chec
 // Storage key is scoped per user so each account has isolated syllabi
 
 export default function App() {
-  const { user, profile, signOut, deleteAccount } = useAuth();
-
-  // Per-user storage key — ensures two accounts on the same device are isolated
-  const userId = user?.id ?? 'anonymous';
-  const STORAGE_KEY = `studyos_syllabi_v3_${userId}`;
+  const STORAGE_KEY = 'studyos_syllabi_v3_local';
 
   const [loading, setLoading] = useState(true);
   const [currentView, setCurrentView] = useState('tracker'); // 'tracker' | 'ingest' | 'analytics' | 'overview'
@@ -42,27 +37,11 @@ export default function App() {
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [uploadModalOpen, setUploadModalOpen] = useState(false);
   const [demoModalOpen, setDemoModalOpen] = useState(false);
-  const [profileMenuOpen, setProfileMenuOpen] = useState(false);
-  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
-  const [deleteLoading, setDeleteLoading] = useState(false);
   const [canInstall, setCanInstall] = useState(false);
-  const profileMenuRef = useRef(null);
 
   // Subscribe to PWA install availability
   useEffect(() => {
     return onInstallableChange((installable) => setCanInstall(installable));
-  }, []);
-
-  // Close profile menu on outside click
-  useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (profileMenuRef.current && !profileMenuRef.current.contains(e.target)) {
-        setProfileMenuOpen(false);
-        setDeleteConfirmOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
   // Helper: load syllabi for a given storage key
@@ -82,19 +61,6 @@ export default function App() {
   // Initialize Syllabi from localStorage or Presets
   const [syllabiList, setSyllabiList] = useState(() => loadSyllabiFromStorage(STORAGE_KEY));
   const [activeSyllabusId, setActiveSyllabusId] = useState(() => syllabiList[0]?.id || 'preset-btech-cse-sem1');
-
-  // ── KEY FIX: Re-load syllabi whenever user switches ──
-  // Without this, useState initializer only runs on first mount,
-  // so logging into a different account would show the previous user's data.
-  const prevUserIdRef = React.useRef(userId);
-  useEffect(() => {
-    if (prevUserIdRef.current !== userId) {
-      prevUserIdRef.current = userId;
-      const freshData = loadSyllabiFromStorage(STORAGE_KEY);
-      setSyllabiList(freshData);
-      setActiveSyllabusId(freshData[0]?.id || 'preset-btech-cse-sem1');
-    }
-  }, [userId, STORAGE_KEY]);
 
   // Save to localStorage — includes STORAGE_KEY in deps so we never
   // write stale data under the wrong user's key
@@ -277,104 +243,6 @@ export default function App() {
               <span>{currentView === 'overview' ? 'Open Workspace' : 'Brand Story & 3D'}</span>
             </button>
 
-            {/* User Avatar + Profile Menu */}
-            <div className="relative pl-1 border-l border-slate-200/80" ref={profileMenuRef}>
-              <button
-                id="header-profile-btn"
-                onClick={() => { setProfileMenuOpen(v => !v); setDeleteConfirmOpen(false); }}
-                className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center text-white text-xs font-bold flex-shrink-0 shadow-sm cursor-pointer hover:scale-105 transition-transform ring-2 ring-transparent hover:ring-indigo-300"
-                title="Profile menu"
-                aria-label="Profile menu"
-              >
-                {(profile?.username?.[0] || user?.email?.[0] || '?').toUpperCase()}
-              </button>
-
-              {/* Dropdown */}
-              {profileMenuOpen && (
-                <div
-                  className="absolute right-0 top-full mt-2.5 w-72 rounded-2xl shadow-2xl border border-slate-200/70 overflow-hidden z-[100] animate-in fade-in slide-in-from-top-2 duration-200"
-                  style={{ background: 'rgba(255,255,255,0.92)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)' }}
-                >
-                  {/* Profile info header */}
-                  <div className="px-5 pt-5 pb-4 border-b border-slate-100">
-                    <div className="flex items-center gap-3">
-                      <div className="w-11 h-11 rounded-full bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center text-white text-base font-bold shadow-md flex-shrink-0">
-                        {(profile?.username?.[0] || user?.email?.[0] || '?').toUpperCase()}
-                      </div>
-                      <div className="min-w-0">
-                        {profile?.username && (
-                          <p className="font-display font-bold text-sm text-slate-900 truncate">{profile.username}</p>
-                        )}
-                        <p className="text-xs text-slate-500 truncate">{user?.email}</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Actions */}
-                  <div className="p-2">
-                    <button
-                      id="menu-sign-out-btn"
-                      onClick={() => { setProfileMenuOpen(false); signOut(); }}
-                      className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold text-slate-700 hover:bg-slate-50 hover:text-slate-900 transition-colors cursor-pointer"
-                    >
-                      <LogOut className="w-4 h-4 text-slate-400" />
-                      Sign Out
-                    </button>
-
-                    <div className="my-1 h-px bg-slate-100" />
-
-                    {!deleteConfirmOpen ? (
-                      <button
-                        id="menu-delete-account-btn"
-                        onClick={() => setDeleteConfirmOpen(true)}
-                        className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold text-red-500 hover:bg-red-50 hover:text-red-600 transition-colors cursor-pointer"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                        Delete Account
-                      </button>
-                    ) : (
-                      <div className="px-3 py-3 rounded-xl bg-red-50/80 border border-red-100">
-                        <div className="flex items-center gap-2 mb-2">
-                          <AlertTriangle className="w-4 h-4 text-red-500 flex-shrink-0" />
-                          <p className="text-xs font-bold text-red-600">This cannot be undone</p>
-                        </div>
-                        <p className="text-[11px] text-red-500/80 mb-3 leading-relaxed">
-                          Your profile, saved syllabi, and all data will be permanently removed.
-                        </p>
-                        <div className="flex gap-2">
-                          <button
-                            onClick={() => setDeleteConfirmOpen(false)}
-                            className="flex-1 px-3 py-1.5 rounded-lg text-xs font-bold text-slate-600 bg-white border border-slate-200 hover:bg-slate-50 transition-colors cursor-pointer"
-                          >
-                            Cancel
-                          </button>
-                          <button
-                            id="confirm-delete-account-btn"
-                            disabled={deleteLoading}
-                            onClick={async () => {
-                              setDeleteLoading(true);
-                              try {
-                                await deleteAccount();
-                              } catch (err) {
-                                console.error('Delete account error:', err);
-                                alert('Failed to delete account. Please try again.');
-                              } finally {
-                                setDeleteLoading(false);
-                                setDeleteConfirmOpen(false);
-                                setProfileMenuOpen(false);
-                              }
-                            }}
-                            className="flex-1 px-3 py-1.5 rounded-lg text-xs font-bold text-white bg-red-500 hover:bg-red-600 transition-colors cursor-pointer disabled:opacity-60"
-                          >
-                            {deleteLoading ? 'Deleting…' : 'Yes, Delete'}
-                          </button>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-            </div>
           </div>
         </header>
 
