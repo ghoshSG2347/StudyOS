@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Layers, Sparkles, ArrowRight, Menu, X } from 'lucide-react';
+import { ArrowRight, Menu, X } from 'lucide-react';
 
 export default function Navbar({ onOpenDemo }) {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -37,9 +37,11 @@ export default function Navbar({ onOpenDemo }) {
       >
         {/* Brand Logo */}
         <a href="#" className="flex items-center gap-2.5 group">
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-600 via-indigo-500 to-amber-400 flex items-center justify-center shadow-md shadow-indigo-500/20 group-hover:scale-105 transition-transform duration-300">
-            <Layers className="w-4.5 h-4.5 text-white" />
-          </div>
+          <img
+            src="/logo-cropped.png"
+            alt="StudyOS"
+            className="w-9 h-9 rounded-xl object-contain shadow-md shadow-indigo-500/20 group-hover:scale-105 transition-transform duration-300"
+          />
           <div className="flex flex-col">
             <span className="font-display font-black text-lg tracking-tight text-slate-900 leading-none">
               Study<span className="text-indigo-600">OS</span>

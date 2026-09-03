@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { 
-  Layers, CheckSquare, FileUp, BarChart3, Sparkles, BookOpen, 
+  CheckSquare, FileUp, BarChart3, Sparkles, BookOpen, 
   ChevronLeft, ChevronRight, Plus, Trash2, Edit3, ShieldCheck, 
   Settings, Zap, ExternalLink, Menu, X, ArrowUpRight, Check, LogOut
 } from 'lucide-react';
@@ -86,9 +86,11 @@ export default function Sidebar({
           {/* Brand Logo & Collapse Button */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3 overflow-hidden">
-              <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-indigo-600 via-indigo-500 to-amber-400 flex items-center justify-center shadow-md shadow-indigo-500/25 flex-shrink-0">
-                <Layers className="w-5 h-5 text-white" />
-              </div>
+              <img
+                src="/logo-cropped.png"
+                alt="StudyOS"
+                className="w-10 h-10 rounded-2xl object-contain shadow-md shadow-indigo-500/25 flex-shrink-0"
+              />
               {!isCollapsed && (
                 <div className="flex flex-col">
                   <span className="font-display font-black text-lg tracking-tight text-slate-900 leading-tight">

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { supabase } from '../supabaseClient';
 import {
-  BookOpen, Mail, Lock, Eye, EyeOff, ArrowRight,
+  Mail, Lock, Eye, EyeOff, ArrowRight,
   Sparkles, CheckCircle2, AlertCircle, Loader2, User
 } from 'lucide-react';
 
@@ -87,9 +87,11 @@ export default function AuthPage() {
 
         {/* Wordmark */}
         <div className="flex items-center justify-center gap-2.5 mb-8">
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shadow-lg shadow-indigo-500/30">
-            <BookOpen className="w-5 h-5 text-white" />
-          </div>
+          <img
+            src="/logo-cropped.png"
+            alt="StudyOS"
+            className="w-9 h-9 rounded-xl object-contain shadow-lg shadow-indigo-500/30"
+          />
           <span className="font-black text-2xl tracking-tight text-white">
             Study<span className="text-indigo-400">OS</span>
           </span>

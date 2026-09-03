@@ -1,5 +1,5 @@
 import React from 'react';
-import { Layers, Sparkles, Heart, Activity, Globe, Share2, ShieldCheck, ExternalLink } from 'lucide-react';
+import { Sparkles, Heart, Activity, Globe, Share2, ShieldCheck, ExternalLink } from 'lucide-react';
 
 
 export default function Footer() {
@@ -15,9 +15,11 @@ export default function Footer() {
           {/* Column 1: Brand & Thesis (5 cols) */}
           <div className="lg:col-span-5 flex flex-col items-start">
             <div className="flex items-center gap-2.5 mb-4">
-              <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-600 via-indigo-500 to-amber-400 flex items-center justify-center shadow-md shadow-indigo-500/20">
-                <Layers className="w-4.5 h-4.5 text-white" />
-              </div>
+              <img
+                src="/logo-cropped.png"
+                alt="StudyOS"
+                className="w-9 h-9 rounded-xl object-contain shadow-md shadow-indigo-500/20"
+              />
               <span className="font-display font-black text-xl tracking-tight text-white">
                 Study<span className="text-indigo-400">OS</span>
               </span>

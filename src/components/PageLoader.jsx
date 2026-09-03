@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import gsap from 'gsap';
-import { Sparkles, Layers } from 'lucide-react';
+import { Sparkles } from 'lucide-react';
 
 export default function PageLoader({ onComplete }) {
   const containerRef = useRef(null);
@@ -62,9 +62,11 @@ export default function PageLoader({ onComplete }) {
 
         {/* Brand Letters */}
         <div ref={textRef} className="flex items-center justify-center gap-1.5 overflow-hidden py-2">
-          <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-indigo-600 via-indigo-500 to-amber-400 flex items-center justify-center shadow-lg shadow-indigo-500/30 mr-2">
-            <Layers className="w-5 h-5 text-white" />
-          </div>
+          <img
+            src="/logo-cropped.png"
+            alt="StudyOS"
+            className="w-10 h-10 rounded-2xl object-contain shadow-lg shadow-indigo-500/30 mr-2"
+          />
           {brandName.split('').map((char, index) => (
             <span
               key={index}

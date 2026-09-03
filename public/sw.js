@@ -1,15 +1,15 @@
-const CACHE_NAME = 'studyos-pwa-v1';
+const CACHE_NAME = 'studyos-pwa-v2';
 const STATIC_PRECACHE = [
   '/',
   '/index.html',
   '/manifest.json',
-  '/favicon.svg',
+  '/favicon-32x32.png',
   '/icons/icon-192x192.png',
   '/icons/icon-512x512.png',
   '/icons/icon-maskable-192x192.png',
   '/icons/icon-maskable-512x512.png',
-  '/icons/icon.svg',
-  '/icons/apple-touch-icon.png'
+  '/icons/apple-touch-icon.png',
+  '/logo-cropped.png'
 ];
 
 // Install: Pre-cache static shell & activate immediately
