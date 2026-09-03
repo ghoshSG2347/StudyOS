@@ -1,7 +1,11 @@
 import React, { Component, StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import './index.css';
 import App from './App.jsx';
+import LoginPage from './pages/LoginPage.jsx';
+import SignUpPage from './pages/SignUpPage.jsx';
+import { AuthProvider, useAuth } from './context/AuthContext.jsx';
 import { registerServiceWorker } from './pwaRegister';
 
 // Register Service Worker for offline asset caching and PWA installation
@@ -51,11 +55,11 @@ class ErrorBoundary extends Component {
                     localStorage.clear();
                     sessionStorage.clear();
                   } catch (_) {}
-                  window.location.reload();
+                  window.location.href = '/login';
                 }}
                 className="w-full py-2.5 rounded-xl bg-white/[0.06] hover:bg-white/[0.1] text-slate-400 hover:text-white font-medium text-xs transition-all"
               >
-                Clear Local Data & Reload
+                Clear Local Data & Re-login
               </button>
             </div>
           </div>
@@ -66,10 +70,30 @@ class ErrorBoundary extends Component {
   }
 }
 
+function ProtectedRoute({ children }) {
+  const { user, loading } = useAuth();
+  if (loading) return <div className="min-h-screen bg-slate-950 flex items-center justify-center text-slate-400">Loading StudyOS…</div>;
+  return user ? children : <Navigate to="/login" replace />;
+}
+
+function AppRouter() {
+  return (
+    <Routes>
+      <Route path="/login" element={<LoginPage />} />
+      <Route path="/register" element={<SignUpPage />} />
+      <Route path="/*" element={<ProtectedRoute><App /></ProtectedRoute>} />
+    </Routes>
+  );
+}
+
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <ErrorBoundary>
-      <App />
+      <BrowserRouter>
+        <AuthProvider>
+          <AppRouter />
+        </AuthProvider>
+      </BrowserRouter>
     </ErrorBoundary>
   </StrictMode>,
 );

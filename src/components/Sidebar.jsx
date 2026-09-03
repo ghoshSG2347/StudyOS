@@ -2,9 +2,10 @@ import React, { useState } from 'react';
 import { 
   CheckSquare, FileUp, BarChart3, Sparkles, BookOpen, 
   ChevronLeft, ChevronRight, Plus, Trash2, Edit3, ShieldCheck, 
-  Settings, Zap, ExternalLink, Menu, X, ArrowUpRight, Check
+  Settings, Zap, ExternalLink, Menu, X, ArrowUpRight, Check, LogOut
 } from 'lucide-react';
 import PwaInstallPrompt from './PwaInstallPrompt';
+import { useAuth } from '../context/AuthContext';
 
 export default function Sidebar({ 
   currentView, 
@@ -22,6 +23,7 @@ export default function Sidebar({
   mobileOpen,
   setMobileOpen
 }) {
+  const { user, signOut } = useAuth();
   const [syllabusDropdownOpen, setSyllabusDropdownOpen] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [editingTitle, setEditingTitle] = useState('');
@@ -316,6 +318,12 @@ export default function Sidebar({
                 </div>
                 <span>99.9% ACCURACY</span>
               </div>
+              <div className="flex items-center justify-between gap-2 pt-1">
+                <span className="truncate text-[10px] text-slate-500">{user?.email}</span>
+                <button onClick={signOut} className="flex items-center gap-1 text-[10px] font-bold text-slate-400 hover:text-rose-600 cursor-pointer" title="Sign out">
+                  <LogOut className="w-3.5 h-3.5" /> Sign out
+                </button>
+              </div>
             </div>
           ) : (
             <div className="flex flex-col items-center gap-3">
@@ -323,6 +331,9 @@ export default function Sidebar({
                 {overallStats.percent}%
               </div>
               <span className="h-2 w-2 rounded-full bg-emerald-500" />
+              <button onClick={signOut} title="Sign out" aria-label="Sign out" className="p-1.5 text-slate-400 hover:text-rose-600 cursor-pointer">
+                <LogOut className="w-3.5 h-3.5" />
+              </button>
             </div>
           )}
         </div>
