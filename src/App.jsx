@@ -45,19 +45,6 @@ export default function App() {
     return onInstallableChange((installable) => setCanInstall(installable));
   }, []);
 
-  const loadLegacySyllabi = () => {
-    try {
-      const saved = localStorage.getItem('studyos_syllabi_v3_local');
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed)) return parsed;
-      }
-    } catch (error) {
-      console.warn('Could not migrate local syllabus data:', error);
-    }
-    return null;
-  };
-
   const [syllabiList, setSyllabiList] = useState([]);
   const [activeSyllabusId, setActiveSyllabusId] = useState(() => syllabiList[0]?.id || 'preset-btech-cse-sem1');
 
@@ -77,7 +64,7 @@ export default function App() {
         return;
       }
       const rows = data || [];
-      const source = rows.length ? rows : (loadLegacySyllabi() || PRESET_CURRICULA).map(syllabus => ({
+      const source = rows.length ? rows : PRESET_CURRICULA.map(syllabus => ({
         syllabus_key: syllabus.id,
         syllabus,
         is_deleted: false
@@ -93,7 +80,6 @@ export default function App() {
           setLoading(false);
           return;
         }
-        localStorage.removeItem('studyos_syllabi_v3_local');
       }
       if (!cancelled) {
         const initialSyllabi = visible.length ? visible : [{
