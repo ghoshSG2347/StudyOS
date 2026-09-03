@@ -77,7 +77,7 @@ export default function App() {
         return;
       }
       const rows = data || [];
-      let source = rows.length ? rows : (loadLegacySyllabi() || PRESET_CURRICULA).map(syllabus => ({
+      const source = rows.length ? rows : (loadLegacySyllabi() || PRESET_CURRICULA).map(syllabus => ({
         syllabus_key: syllabus.id,
         syllabus,
         is_deleted: false
@@ -93,12 +93,15 @@ export default function App() {
           setLoading(false);
           return;
         }
+        localStorage.removeItem('studyos_syllabi_v3_local');
       }
       if (!cancelled) {
-        setSyllabiList(visible.length ? visible : [{
+        const initialSyllabi = visible.length ? visible : [{
           id: `syllabus-${Date.now()}`, title: 'My Academic Curriculum',
           institution: 'University / Department', createdAt: new Date().toISOString(), subjects: []
-        }]);
+        }];
+        setSyllabiList(initialSyllabi);
+        setActiveSyllabusId(initialSyllabi[0].id);
         setCloudReady(true);
         setLoading(false);
       }
@@ -188,10 +191,24 @@ export default function App() {
   // Syllabus Delete Handler
   const handleDeleteSyllabus = (id) => {
     const target = syllabiList.find(s => s.id === id);
+    if (!target) return;
     const targetTitle = target ? target.title : "this curriculum";
     if (!confirm(`Are you sure you want to delete the entire syllabus "${targetTitle}"? All subjects and progress will be permanently removed.`)) {
       return;
     }
+    const previousList = syllabiList;
+    const remaining = syllabiList.filter(s => s.id !== id);
+    const replacement = {
+      id: `syllabus-${Date.now()}`,
+      title: "My Academic Curriculum",
+      institution: "University / Department",
+      createdAt: new Date().toISOString(),
+      subjects: []
+    };
+    const nextList = remaining.length > 0 ? remaining : [replacement];
+    setSyllabiList(nextList);
+    setActiveSyllabusId(nextList[0].id);
+
     supabase.from('user_syllabi').upsert({
       user_id: user.id,
       syllabus_key: id,
@@ -200,28 +217,11 @@ export default function App() {
     }, { onConflict: 'user_id,syllabus_key' }).then(({ error }) => {
       if (error) {
         console.error('Unable to sync syllabus deletion:', error);
+        setSyllabiList(previousList);
+        setActiveSyllabusId(id);
         setSyncError('This syllabus could not be deleted from the cloud. Please try again.');
-      } else {
       }
     });
-
-    const remaining = syllabiList.filter(s => s.id !== id);
-    if (remaining.length > 0) {
-      setSyllabiList(remaining);
-      if (activeSyllabusId === id) {
-        setActiveSyllabusId(remaining[0].id);
-      }
-    } else {
-      const fresh = {
-        id: `syllabus-${Date.now()}`,
-        title: "My Academic Curriculum",
-        institution: "University / Department",
-        createdAt: new Date().toISOString(),
-        subjects: []
-      };
-      setSyllabiList([fresh]);
-      setActiveSyllabusId(fresh.id);
-    }
   };
 
   if (loading) {
