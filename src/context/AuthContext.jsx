@@ -32,12 +32,26 @@ export function AuthProvider({ children }) {
   const value = {
     user,
     loading,
-    signIn: (email, password) => supabase.auth.signInWithPassword({ email, password }),
-    signUp: (email, password, fullName) => supabase.auth.signUp({
-      email,
-      password,
-      options: { data: { full_name: fullName } }
-    }),
+    signIn: async (email, password) => {
+      try {
+        return await supabase.auth.signInWithPassword({ email, password });
+      } catch (error) {
+        console.error('Sign-in request failed:', error);
+        return { data: { user: null, session: null }, error: new Error('AUTH_NETWORK_ERROR') };
+      }
+    },
+    signUp: async (email, password, fullName) => {
+      try {
+        return await supabase.auth.signUp({
+          email,
+          password,
+          options: { data: { full_name: fullName } }
+        });
+      } catch (error) {
+        console.error('Registration request failed:', error);
+        return { data: { user: null, session: null }, error: new Error('AUTH_NETWORK_ERROR') };
+      }
+    },
     signOut: () => supabase.auth.signOut()
   };
 

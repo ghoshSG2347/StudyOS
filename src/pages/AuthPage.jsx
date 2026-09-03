@@ -35,7 +35,11 @@ export default function AuthPage({ mode }) {
       : await signIn(form.email.trim(), form.password);
     setBusy(false);
     if (result.error) {
-      setError(isRegister ? result.error.message : 'Email or password is incorrect.');
+      if (result.error.message === 'AUTH_NETWORK_ERROR' || result.error.message === 'Failed to fetch') {
+        setError('Unable to connect to StudyOS. Check your internet connection or Supabase configuration.');
+      } else {
+        setError(isRegister ? result.error.message : 'Email or password is incorrect.');
+      }
       return;
     }
     if (isRegister && !result.data.session) {
