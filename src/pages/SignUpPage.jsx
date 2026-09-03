@@ -56,6 +56,8 @@ export default function SignUpPage() {
   const [email, setEmail]       = useState('');
   const [password, setPassword] = useState('');
   const [showPw, setShowPw]     = useState(false);
+  const [showConfirmPw, setShowConfirmPw] = useState(false);
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading]   = useState(false);
   const [error, setError]       = useState('');
   const [done, setDone]         = useState(false); // "Check your email" verification screen
@@ -115,6 +117,10 @@ export default function SignUpPage() {
       setError('Password is too weak. Use at least 12 characters with uppercase, numbers, and symbols.');
       return;
     }
+    if (password !== confirmPassword) {
+      setError('Passwords do not match.');
+      return;
+    }
 
     setLoading(true);
 
@@ -143,9 +149,9 @@ export default function SignUpPage() {
       } else if (msg.toLowerCase().includes('username') && msg.toLowerCase().includes('taken')) {
         setError('That username is already taken. Please pick another.');
       } else if (msg.toLowerCase().includes('password')) {
-        setError('Password does not meet security requirements: ' + msg);
+        setError('Password does not meet the required security requirements.');
       } else {
-        setError(msg || 'An error occurred during sign up. Please try again.');
+        setError('Something went wrong. Please try again.');
       }
     } finally {
       setLoading(false);
@@ -361,6 +367,20 @@ export default function SignUpPage() {
                   </div>
                 </div>
               )}
+            </div>
+
+            {/* Confirm Password */}
+            <div data-anim className="space-y-1.5">
+              <label htmlFor="su-confirm-password" className="block text-[11px] font-bold text-slate-400 uppercase tracking-widest font-mono">
+                Confirm Password <span className="text-indigo-400">*</span>
+              </label>
+              <div className="relative">
+                <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                <input id="su-confirm-password" type={showConfirmPw ? 'text' : 'password'} value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} autoComplete="new-password" required className="w-full pl-10 pr-11 py-3 rounded-xl bg-white/[0.06] border border-white/10 text-white placeholder-slate-600 text-sm focus:outline-none focus:border-indigo-500 focus:bg-white/[0.08] transition-all" />
+                <button type="button" onClick={() => setShowConfirmPw((v) => !v)} aria-label={showConfirmPw ? 'Hide password' : 'Show password'} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 cursor-pointer">
+                  {showConfirmPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
             </div>
 
             {/* Submit Button */}

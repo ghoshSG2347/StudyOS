@@ -16,7 +16,6 @@ export function AuthProvider({ children }) {
   const [profile, setProfile]           = useState(null);
   const [profileLoaded, setProfileLoaded] = useState(false);
   const [loading, setLoading]           = useState(true);
-  const [mfaPending, setMfaPending]     = useState(false);
 
   // Fetch profile row for a given user id
   const fetchProfile = useCallback(async (userId) => {
@@ -46,56 +45,26 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     // 1. Rehydrate existing session on mount
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (!mfaPending) {
-        setSession(session);
-        const u = session?.user ?? null;
-        setUser(u);
-        fetchProfile(u?.id ?? null);
-      }
+      setSession(session);
+      const u = session?.user ?? null;
+      setUser(u);
+      fetchProfile(u?.id ?? null);
       setLoading(false);
     });
 
     // 2. Subscribe to all auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (_event, session) => {
-        if (!mfaPending) {
-          setSession(session);
-          const u = session?.user ?? null;
-          setUser(u);
-          fetchProfile(u?.id ?? null);
-        }
+        setSession(session);
+        const u = session?.user ?? null;
+        setUser(u);
+        fetchProfile(u?.id ?? null);
         setLoading(false);
       }
     );
 
     return () => subscription.unsubscribe();
-  }, [fetchProfile, mfaPending]);
-
-  const beginMfa = useCallback(() => {
-    setMfaPending(true);
-    setSession(null);
-    setUser(null);
-    setProfile(null);
-    setProfileLoaded(true);
-  }, []);
-
-  const completeMfa = useCallback(async () => {
-    setMfaPending(false);
-    const { data: { session: verifiedSession } } = await supabase.auth.getSession();
-    setSession(verifiedSession);
-    const verifiedUser = verifiedSession?.user ?? null;
-    setUser(verifiedUser);
-    await fetchProfile(verifiedUser?.id ?? null);
   }, [fetchProfile]);
-
-  const cancelMfa = useCallback(async () => {
-    setMfaPending(false);
-    await supabase.auth.signOut();
-    setSession(null);
-    setUser(null);
-    setProfile(null);
-    setProfileLoaded(true);
-  }, []);
 
   const deleteAccount = async () => {
     const currentUser = user;
@@ -130,8 +99,8 @@ export function AuthProvider({ children }) {
 
   return (
     <AuthContext.Provider value={{
-      user, session, profile, profileLoaded, loading, mfaPending,
-      beginMfa, completeMfa, cancelMfa, signOut, deleteAccount, refreshProfile
+      user, session, profile, profileLoaded, loading,
+      signOut, deleteAccount, refreshProfile
     }}>
       {children}
     </AuthContext.Provider>

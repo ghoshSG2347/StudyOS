@@ -6,6 +6,8 @@ import App from './App.jsx';
 import SignUpPage from './pages/SignUpPage.jsx';
 import LoginPage from './pages/LoginPage.jsx';
 import CompleteProfilePage from './pages/CompleteProfilePage.jsx';
+import ForgotPasswordPage from './pages/ForgotPasswordPage.jsx';
+import ResetPasswordPage from './pages/ResetPasswordPage.jsx';
 import { AuthProvider, useAuth } from './context/AuthContext.jsx';
 import { registerServiceWorker } from './pwaRegister';
 
@@ -114,7 +116,10 @@ function AppRouter() {
   return (
     <Routes>
       <Route path="/signup" element={<SignUpPage />} />
+      <Route path="/register" element={<SignUpPage />} />
       <Route path="/login" element={<LoginPage />} />
+      <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+      <Route path="/reset-password" element={<ResetPasswordPage />} />
       <Route path="/complete-profile" element={<CompleteProfilePage />} />
       <Route
         path="/*"
@@ -139,4 +144,3 @@ createRoot(document.getElementById('root')).render(
     </ErrorBoundary>
   </StrictMode>,
 );
-
