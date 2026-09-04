@@ -6,8 +6,6 @@ import {
   FileUp, BookOpen, Layers, Sparkles, ChevronRight, Menu, X, Download
 } from 'lucide-react';
 import { promptPwaInstall, onInstallableChange } from './pwaRegister';
-import { useAuth } from './context/AuthContext';
-import { supabase } from './supabaseClient';
 import Hero from './components/Hero3D';
 
 import Features from './components/Features';
@@ -19,6 +17,34 @@ import { PRESET_CURRICULA } from './utils/syllabusParser';
 
 gsap.registerPlugin(ScrollTrigger);
 
+const STORAGE_KEY = 'studyos-syllabus-data';
+
+function loadStoredState() {
+  const fallback = {
+    syllabiList: PRESET_CURRICULA,
+    activeSyllabusId: PRESET_CURRICULA[0]?.id || 'preset-btech-cse-sem1'
+  };
+
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (!stored) return fallback;
+
+    const parsed = JSON.parse(stored);
+    if (!Array.isArray(parsed.syllabiList) || parsed.syllabiList.length === 0) {
+      return fallback;
+    }
+
+    const activeSyllabusId = parsed.syllabiList.some(syllabus => syllabus.id === parsed.activeSyllabusId)
+      ? parsed.activeSyllabusId
+      : parsed.syllabiList[0].id;
+
+    return { syllabiList: parsed.syllabiList, activeSyllabusId };
+  } catch (error) {
+    console.warn('Unable to restore locally saved syllabus data:', error);
+    return fallback;
+  }
+}
+
 /*
 <!-- BRAND BRAIN: StudyOS Syllabus System -->
 Product: StudyOS — The Intelligent Academic Engine
@@ -29,10 +55,7 @@ Primary Action: Ingest PDF / Scanned Photos ➔ 100% Noise-Free Micro-Topic Chec
 */
 
 export default function App() {
-  const { user } = useAuth();
-  const [loading, setLoading] = useState(true);
-  const [cloudReady, setCloudReady] = useState(false);
-  const [syncError, setSyncError] = useState('');
+  const [initialState] = useState(loadStoredState);
   const [currentView, setCurrentView] = useState('tracker'); // 'tracker' | 'ingest' | 'analytics' | 'overview'
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
@@ -45,73 +68,16 @@ export default function App() {
     return onInstallableChange((installable) => setCanInstall(installable));
   }, []);
 
-  const [syllabiList, setSyllabiList] = useState([]);
-  const [activeSyllabusId, setActiveSyllabusId] = useState(() => syllabiList[0]?.id || 'preset-btech-cse-sem1');
+  const [syllabiList, setSyllabiList] = useState(initialState.syllabiList);
+  const [activeSyllabusId, setActiveSyllabusId] = useState(initialState.activeSyllabusId);
 
   useEffect(() => {
-    let cancelled = false;
-    async function loadCloudSyllabi() {
-      setLoading(true);
-      setSyncError('');
-      const { data, error } = await supabase
-        .from('user_syllabi')
-        .select('syllabus_key, syllabus, is_deleted')
-        .eq('user_id', user.id);
-      if (cancelled) return;
-      if (error) {
-        setSyncError('Unable to load your syllabuses. Please refresh and try again.');
-        setLoading(false);
-        return;
-      }
-      const rows = data || [];
-      const source = rows.length ? rows : PRESET_CURRICULA.map(syllabus => ({
-        syllabus_key: syllabus.id,
-        syllabus,
-        is_deleted: false
-      }));
-      const visible = source.filter(row => !row.is_deleted).map(row => row.syllabus);
-      if (!rows.length) {
-        const { error: migrationError } = await supabase.from('user_syllabi').upsert(
-          source.map(row => ({ user_id: user.id, syllabus_key: row.syllabus_key, syllabus: row.syllabus, is_deleted: false })),
-          { onConflict: 'user_id,syllabus_key' }
-        );
-        if (migrationError) {
-          setSyncError('Unable to save your syllabus data. Please try again.');
-          setLoading(false);
-          return;
-        }
-      }
-      if (!cancelled) {
-        const initialSyllabi = visible.length ? visible : [{
-          id: `syllabus-${Date.now()}`, title: 'My Academic Curriculum',
-          institution: 'University / Department', createdAt: new Date().toISOString(), subjects: []
-        }];
-        setSyllabiList(initialSyllabi);
-        setActiveSyllabusId(initialSyllabi[0].id);
-        setCloudReady(true);
-        setLoading(false);
-      }
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ syllabiList, activeSyllabusId }));
+    } catch (error) {
+      console.error('Unable to save syllabus data locally:', error);
     }
-    loadCloudSyllabi().catch(error => {
-      console.error('Unable to load cloud syllabuses:', error);
-      if (!cancelled) { setSyncError('Unable to connect to StudyOS. Please try again.'); setLoading(false); }
-    });
-    return () => { cancelled = true; };
-  }, [user.id]);
-
-  useEffect(() => {
-    if (!cloudReady) return;
-    const rows = syllabiList.map(syllabus => ({
-      user_id: user.id, syllabus_key: syllabus.id, syllabus, is_deleted: false
-    }));
-    if (!rows.length) return;
-    supabase.from('user_syllabi').upsert(rows, { onConflict: 'user_id,syllabus_key' }).then(({ error }) => {
-      if (error) {
-        console.error('Unable to sync syllabus changes:', error);
-        setSyncError('Your latest change could not be synced. Please try again.');
-      } else setSyncError('');
-    });
-  }, [cloudReady, syllabiList, user.id]);
+  }, [syllabiList, activeSyllabusId]);
 
   // Calculate Overall Statistics
   const activeSyllabus = syllabiList.find(s => s.id === activeSyllabusId) || syllabiList[0];
@@ -182,7 +148,6 @@ export default function App() {
     if (!confirm(`Are you sure you want to delete the entire syllabus "${targetTitle}"? All subjects and progress will be permanently removed.`)) {
       return;
     }
-    const previousList = syllabiList;
     const remaining = syllabiList.filter(s => s.id !== id);
     const replacement = {
       id: `syllabus-${Date.now()}`,
@@ -194,25 +159,7 @@ export default function App() {
     const nextList = remaining.length > 0 ? remaining : [replacement];
     setSyllabiList(nextList);
     setActiveSyllabusId(nextList[0].id);
-
-    supabase.from('user_syllabi').upsert({
-      user_id: user.id,
-      syllabus_key: id,
-      syllabus: target,
-      is_deleted: true
-    }, { onConflict: 'user_id,syllabus_key' }).then(({ error }) => {
-      if (error) {
-        console.error('Unable to sync syllabus deletion:', error);
-        setSyllabiList(previousList);
-        setActiveSyllabusId(id);
-        setSyncError('This syllabus could not be deleted from the cloud. Please try again.');
-      }
-    });
   };
-
-  if (loading) {
-    return <div className="min-h-screen bg-slate-950 flex items-center justify-center text-slate-400">Loading StudyOS…</div>;
-  }
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 font-sans antialiased flex flex-col lg:flex-row overflow-x-hidden selection:bg-indigo-500 selection:text-white">
@@ -239,8 +186,6 @@ export default function App() {
       <div className={`flex-1 flex flex-col min-w-0 transition-all duration-300 ${
         isSidebarCollapsed ? 'lg:pl-20' : 'lg:pl-72'
       }`}>
-        {syncError && <div className="bg-rose-50 border-b border-rose-200 px-4 py-2 text-center text-xs font-semibold text-rose-700">{syncError}</div>}
-        
         {/* Top Header Bar */}
         <header className="sticky top-0 z-30 bg-white/80 backdrop-blur-md border-b border-slate-200/80 px-4 sm:px-8 py-3.5 flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">

@@ -554,7 +554,7 @@ export default function InteractiveTrackerDemo() {
                     href="#pricing"
                     className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold shadow-md shadow-indigo-600/20 active:scale-95 transition-all"
                   >
-                    <span>Deploy Your Own Tracker</span>
+                    <span>Open Your Own Tracker</span>
                     <ArrowRight className="w-3.5 h-3.5" />
                   </a>
                 </div>

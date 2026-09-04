@@ -53,13 +53,6 @@
       "description": "Open active syllabus mastery tracker",
       "url": "/",
       "icons": [{ "src": "/icons/icon-192x192.png", "sizes": "192x192" }]
-    },
-    {
-      "name": "Sign In",
-      "short_name": "Login",
-      "description": "Access your StudyOS account",
-      "url": "/login",
-      "icons": [{ "src": "/icons/icon-192x192.png", "sizes": "192x192" }]
     }
   ]
 }

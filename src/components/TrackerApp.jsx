@@ -719,7 +719,7 @@ export default function TrackerApp({
                   disabled={selectedCourseIds.length === 0}
                   className="px-8 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:opacity-40 text-white text-xs font-bold shadow-md shadow-indigo-600/30 flex items-center gap-2 cursor-pointer transition-all active:scale-95"
                 >
-                  <span>Deploy {selectedCourseIds.length} Courses to Interactive Tracker</span>
+                  <span>Add {selectedCourseIds.length} Courses to Interactive Tracker</span>
                   <ArrowRight className="w-4 h-4" />
                 </button>
               </div>
