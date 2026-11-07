@@ -1,0 +1,11 @@
+{
+  "name": "studyos-frontend",
+  "private": true,
+  "version": "1.0.0",
+  "scripts": {
+    "dev": "npm --prefix LandingPage run dev",
+    "build": "npm --prefix LandingPage run build",
+    "preview": "npm --prefix LandingPage run preview",
+    "typecheck": "npm --prefix LandingPage run typecheck"
+  }
+}

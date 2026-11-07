@@ -1,0 +1,33 @@
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+  body {
+    @apply bg-paper-50 text-ink-900 font-sans antialiased;
+    line-height: 1.5;
+  }
+  ::selection {
+    background-color: #D4D0E8;
+    color: #1C2530;
+  }
+  :focus-visible {
+    outline: none;
+  }
+}
+
+@layer utilities {
+  .focus-ring {
+    @apply focus-visible:ring-2 focus-visible:ring-sage-400 focus-visible:ring-offset-2 focus-visible:ring-offset-paper-50;
+  }
+  .field-focus {
+    @apply focus:border-sage-400 focus:ring-2 focus:ring-sage-200;
+  }
+}

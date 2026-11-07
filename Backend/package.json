@@ -1,0 +1,9 @@
+{
+  "name": "studyos-backend",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": { "test": "vitest run", "test:watch": "vitest", "typecheck": "tsc --noEmit" },
+  "dependencies": { "@convex-dev/better-auth": "^0.13.0", "better-auth": "^1.7.16", "convex": "^1.25.0" },
+  "devDependencies": { "@types/node": "^22.0.0", "typescript": "^5.7.0", "vitest": "^3.0.0" }
+}

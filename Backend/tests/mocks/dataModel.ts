@@ -1,0 +1,2 @@
+export type DataModel = any;
+
