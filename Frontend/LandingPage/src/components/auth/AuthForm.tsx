@@ -28,6 +28,8 @@ export function AuthForm({
 
   useEffect(() => {
     setMode(initialMode);
+    // Clear any lingering error when the mode/page changes
+    setFormError(null);
   }, [initialMode]);
   const [submission, setSubmission] = useState<SubmissionState>('idle');
   const [googleLoading, setGoogleLoading] = useState(false);

@@ -215,10 +215,15 @@ export const betterAuthAdapter: AuthAdapter = {
     } catch (err: any) {
       if (err instanceof AuthError) throw err;
       const msg = err?.message || '';
-      if (msg.toLowerCase().includes('not found') || msg.toLowerCase().includes('failed to fetch')) {
-        throw new AuthError('not_configured', 'Google Sign-In is not enabled on this deployment. Please sign in with email and password.');
+      // Only show "not enabled" if truly a 404/provider-not-found error.
+      // Generic network failures get a more helpful retry message.
+      if (msg.toLowerCase().includes('not found') || msg.toLowerCase().includes('provider not')) {
+        throw new AuthError('not_configured', 'Google Sign-In is not configured on this deployment. Please use email and password.');
       }
-      throw new AuthError('google_failed', msg);
+      if (msg.toLowerCase().includes('failed to fetch') || msg.toLowerCase().includes('networkerror')) {
+        throw new AuthError('network', 'Unable to reach the sign-in service. Check your connection and try again.');
+      }
+      throw new AuthError('google_failed', msg || 'Google sign-in did not complete. Please try again.');
     }
   },
 
