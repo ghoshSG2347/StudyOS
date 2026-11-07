@@ -19,6 +19,7 @@ export const createAuth = (ctx: GenericCtx<DataModel>) => {
     trustedOrigins: Array.from(new Set([
       siteUrl,
       "https://studyos-seven-cyan.vercel.app",
+      "https://studyos-1m0ihti9o-hackathon2348sg-9289.vercel.app",
       "http://localhost:5173",
       "http://127.0.0.1:5173",
     ])),
