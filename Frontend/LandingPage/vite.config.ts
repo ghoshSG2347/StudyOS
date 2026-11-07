@@ -10,7 +10,7 @@ export default defineConfig({
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),
       // Allow frontend to import the Convex generated API from the backend
-      '@convex-api': path.resolve(__dirname, '../../Backend/convex/_generated/api'),
+      '@convex-api': path.resolve(__dirname, './src/convex/api'),
     },
   },
   server: {
